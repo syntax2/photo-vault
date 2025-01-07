@@ -1,27 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { oAuth2Client } from "@/lib/google-auth";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3Config } from "@/lib/s3-config";
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const code = searchParams.get("code");
-
-  if (!code) {
-    return NextResponse.redirect(new URL("/auth/error", request.url));
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { tokens } = await oAuth2Client.getToken(code);
-    oAuth2Client.setCredentials(tokens);
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
 
-    // Store tokens securely (you might want to use a session store or secure cookie)
-    const response = NextResponse.redirect(new URL("/", request.url));
-    response.cookies.set("auth_token", tokens.access_token!, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    const buffer = await file.arrayBuffer();
+    const s3Client = new S3Client(s3Config);
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Key: file.name,
+      Body: Buffer.from(buffer),
+      ContentType: file.type,
     });
 
-    return response;
+    await s3Client.send(command);
+
+    return NextResponse.json({
+      success: true,
+      message: "File uploaded successfully",
+    });
   } catch (error) {
-    return NextResponse.redirect(new URL("/auth/error", request.url));
+    console.error("Upload error:", error);
+    return NextResponse.json(
+      { error: "Failed to upload file" },
+      { status: 500 }
+    );
   }
 }

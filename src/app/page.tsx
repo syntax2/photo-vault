@@ -1,35 +1,21 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
-import { ImageGrid } from "@/components/ImageGrid";
-import { UploadButton } from "@/components/UploadButton";
+import ZipUploader from "@/components/ZipUploader";
+// import S3FileList from "@/components/S3FileList";
 
 export default function Home() {
-  const { isAuthenticated, isLoading, login } = useAuth();
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl mb-4">Welcome to PhotoVault</h1>
-        <button
-          onClick={login}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Login with Google
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl mb-4">Your Photos</h1>
-      <UploadButton />
-      <ImageGrid />
+    <main className="min-h-screen bg-gray-50">
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-8 text-center">
+          Photo Storage Manager
+        </h1>
+
+        <div className="space-y-8">
+          <ZipUploader />
+          {/* <S3FileList /> */}
+        </div>
+      </div>
     </main>
   );
 }
